@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ShopSphere - Online Shopping</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;font-family:Arial,sans-serif;background:#f5f7fb;color:#172033}
+header{background:#172554;color:white;padding:20px 6%}
+.top{display:flex;justify-content:space-between;align-items:center;gap:15px;flex-wrap:wrap}
+.logo{font-size:28px;font-weight:bold}
+.logo span{color:#fbbf24}
+button{cursor:pointer;border:0;border-radius:8px;padding:11px 15px;font-weight:bold}
+.cart{background:#fbbf24;color:#172554}
+.hero{padding:45px 6%;background:linear-gradient(120deg,#dbeafe,#ede9fe)}
+.hero h1{font-size:clamp(30px,5vw,46px);margin:0 0 12px}
+.hero p{color:#475569;line-height:1.6}
+.search{padding:24px 6% 10px}
+input{width:100%;padding:14px;border:1px solid #cbd5e1;border-radius:9px;font-size:16px}
+main{padding:15px 6% 45px}
+.categories{display:flex;flex-wrap:wrap;gap:10px;margin:15px 0 25px}
+.categories button{background:white;border:1px solid #cbd5e1}
+.categories button.active{background:#172554;color:white}
+.products{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:20px}
+.card{background:white;border:1px solid #e2e8f0;border-radius:14px;overflow:hidden;box-shadow:0 4px 15px #0f172a0d}
+.card img{width:100%;height:180px;object-fit:cover;background:#e2e8f0}
+.info{padding:16px}
+.tag{color:#64748b;font-size:13px}
+.info p{color:#64748b;line-height:1.5;font-size:14px}
+.price{font-size:20px;font-weight:bold;margin:12px 0}
+.add{width:100%;background:#2563eb;color:white}
+.add:hover{background:#1d4ed8}
+#cartPanel{display:none;background:white;margin:0 6% 25px;padding:20px;border-radius:12px;border:1px solid #ddd}
+.cartrow{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid #eee}
+.remove{background:#fee2e2;color:#991b1b;padding:7px}
+.checkout{width:100%;background:#15803d;color:white;margin-top:10px}
+footer{text-align:center;padding:25px;background:#172554;color:white}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <div class="logo">Shop<span>Sphere</span></div>
+    <button class="cart" onclick="toggleCart()">🛒 Cart (<span id="count">0</span>)</button>
+  </div>
+</header>
+
+<section class="hero">
+  <h1>Discover Your Next Favourite</h1>
+  <p>Explore products, find what you need, and shop with ease.</p>
+</section>
+
+<div class="search">
+  <input id="search" placeholder="🔎 Search products..." oninput="renderProducts()">
+</div>
+
+<main>
+  <h2>Shop by Category</h2>
+  <div class="categories">
+    <button class="active" onclick="setCategory('All',this)">All Products</button>
+    <button onclick="setCategory('Electronics',this)">Electronics</button>
+    <button onclick="setCategory('Fashion',this)">Fashion</button>
+    <button onclick="setCategory('Home',this)">Home & Living</button>
+    <button onclick="setCategory('Accessories',this)">Accessories</button>
+  </div>
+
+  <h2>Featured Products</h2>
+  <div id="products" class="products"></div>
+  <p id="empty" hidden>No products found. Try another search.</p>
+</main>
+
+<section id="cartPanel">
+  <h2>Your Shopping Cart</h2>
+  <div id="cartItems"></div>
+  <h3 id="total">Total: ₹0</h3>
+  <button class="checkout" onclick="checkout()">Place Demo Order</button>
+  <p id="message"></p>
+</section>
+
+<footer>
+  <strong>ShopSphere</strong>
+  <p>Java Web Project | Online Shopping System</p>
+  <small>Educational demo only. No real payments are processed.</small>
+</footer>
+
+<script>
+const products=[
+ {id:1,name:"Wireless Headphones",category:"Electronics",price:1499,description:"Enjoy your favourite music.",emoji:"🎧"},
+ {id:2,name:"Smart Watch",category:"Electronics",price:2199,description:"A stylish everyday companion.",emoji:"⌚"},
+ {id:3,name:"Casual Sneakers",category:"Fashion",price:1799,description:"Comfort for everyday walks.",emoji:"👟"},
+ {id:4,name:"Backpack",category:"Accessories",price:999,description:"Carry your essentials with ease.",emoji:"🎒"},
+ {id:5,name:"Desk Lamp",category:"Home",price:799,description:"Brighten your study space.",emoji:"💡"},
+ {id:6,name:"Sunglasses",category:"Accessories",price:699,description:"Complete your everyday look.",emoji:"🕶️"},
+ {id:7,name:"Coffee Mug",category:"Home",price:299,description:"Enjoy your favourite drink.",emoji:"☕"},
+ {id:8,name:"Cotton T-Shirt",category:"Fashion",price:599,description:"Comfortable casual wear.",emoji:"👕"}
+];
+
+let category="All";
+let cart=[];
+
+function renderProducts(){
+ const query=document.getElementById("search").value.toLowerCase().trim();
+ const list=products.filter(p=>
+   (category==="All"||p.category===category)&&
+   (p.name.toLowerCase().includes(query)||p.category.toLowerCase().includes(query))
+ );
+ document.getElementById("products").innerHTML=list.map(p=>`
+  <article class="card" onclick="showProductDetails(${p.id})">
+   <div style="height:180px;display:grid;place-items:center;background:#e0e7ff;font-size:65px">${p.emoji}</div>
+   <div class="info">
+    <span class="tag">${p.category}</span>
+    <h3>${p.name}</h3>
+    <p>${p.description}</p>
+    <div class="price">₹${p.price.toLocaleString("en-IN")}</div>
+    <button class="add" onclick="addToCart(${p.id})">Add to Cart</button>
+   </div>
+  </article>`).join("");
+ document.getElementById("empty").hidden=list.length>0;
+}
+
+function setCategory(value,button){
+ category=value;
+ document.querySelectorAll(".categories button").forEach(b=>b.classList.remove("active"));
+ button.classList.add("active");
+ renderProducts();
+}
+function showProductDetails(id) {
+    const product = products.find(p => p.id === id);
+    if (!product) return;
+
+    alert(
+        product.name + "\n\n" +
+        product.description + "\n\nPrice: ₹" +
+        product.price.toLocaleString("en-IN")
+    );
+}
+function addToCart(id){
+ const product=products.find(p=>p.id===id);
+ const existing=cart.find(item=>item.id===id);
+ if(existing)existing.quantity++;
+ else cart.push({...product,quantity:1});
+ updateCart();
+}
+
+function removeFromCart(id){
+ cart=cart.filter(item=>item.id!==id);
+ updateCart();
+}
+
+function updateCart(){
+ document.getElementById("count").textContent=cart.reduce((sum,item)=>sum+item.quantity,0);
+ document.getElementById("cartItems").innerHTML=cart.length?cart.map(item=>`
+  <div class="cartrow">
+   <span>${item.emoji} ${item.name} × ${item.quantity}</span>
+   <span>₹${(item.price*item.quantity).toLocaleString("en-IN")}
+   <button class="remove" onclick="removeFromCart(${item.id})">Remove</button></span>
+  </div>`).join(""):"Your cart is empty.";
+ const total=cart.reduce((sum,item)=>sum+item.price*item.quantity,0);
+ document.getElementById("total").textContent="Total: ₹"+total.toLocaleString("en-IN");
+ document.getElementById("message").textContent="";
+}
+
+function toggleCart(){
+ const panel=document.getElementById("cartPanel");
+ panel.style.display=panel.style.display==="block"?"none":"block";
+ updateCart();
+ if(panel.style.display==="block")panel.scrollIntoView({behavior:"smooth"});
+}
+
+function checkout(){
+ if(!cart.length){
+  document.getElementById("message").textContent="Please add a product to your cart first.";
+  return;
+ }
+ document.getElementById("message").textContent="Demo order placed successfully! No payment was taken.";
+ cart=[];
+ updateCart();
+}
+
+renderProducts();
+</script>
+</body>
+</html>
